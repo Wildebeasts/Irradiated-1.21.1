@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "cold_sweat:thermometer"
+    },
+    "title": {
+        "translate": "advancements.cold_sweat.root.title"
+    },
+    "description": {
+        "translate": "advancements.cold_sweat.root.description"
+    },
+    "background": "minecraft:textures/block/basalt_side.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "...",
+    " b ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:gunpowder"
+    },
+    ".": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:psycho",
+    "count": 4
+  }
+}

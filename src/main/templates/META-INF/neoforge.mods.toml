@@ -63,18 +63,9 @@ description='''${mod_description}'''
     # the modid of the dependency
     modId="neoforge" #mandatory
     # The type of the dependency. Can be one of "required", "optional", "incompatible" or "discouraged" (case insensitive).
-    # 'required' requires the mod to exist, 'optional' does not
-    # 'incompatible' will prevent the game from loading when the mod exists, and 'discouraged' will show a warning
     type="required" #mandatory
-    # Optional field describing why the dependency is required or why it is incompatible
-    # reason="..."
-    # The version range of the dependency
     versionRange="[${neo_version},)" #mandatory
-    # An ordering relationship for the dependency.
-    # BEFORE - This mod is loaded BEFORE the dependency
-    # AFTER - This mod is loaded AFTER the dependency
     ordering="NONE"
-    # Side this dependency is applied on - BOTH, CLIENT, or SERVER
     side="BOTH"
 
 # Here's another dependency
@@ -83,6 +74,22 @@ description='''${mod_description}'''
     type="required"
     # This version range declares a minimum of the current minecraft version up to but not including the next major version
     versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+# Declare Cold Sweat dependency to ensure load-after (accept pre-release 2.4-b04b and newer)
+[[dependencies.${mod_id}]]
+    modId="cold_sweat"
+    type="required"
+    versionRange="[2.3,)"
+    ordering="AFTER"
+    side="BOTH"
+
+# Curios API dependency for equipment slots
+[[dependencies.${mod_id}]]
+    modId="curios"
+    type="required"
+    versionRange="[9.0.0,)"
     ordering="NONE"
     side="BOTH"
 

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "...",
+    " b ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:gold_nugget"
+    },
+    ".": {
+      "item": "minecraft:gunpowder"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:stimpack",
+    "count": 4
+  }
+}

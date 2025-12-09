@@ -1,0 +1,31 @@
+{
+  "parent": "cold_sweat:extreme_temps",
+  "display": {
+    "icon": {
+      "item": "minecraft:heart_of_the_sea"
+    },
+    "title": {
+      "translate": "advancements.cold_sweat.get_soul_lamp.title"
+    },
+    "description": {
+      "translate": "advancements.cold_sweat.get_soul_lamp.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "player": {},
+        "items": [
+          {
+            "item": "cold_sweat:soulspring_lamp"
+          }
+        ]
+      }
+    }
+  }
+}

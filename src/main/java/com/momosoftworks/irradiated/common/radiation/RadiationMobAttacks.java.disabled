@@ -1,0 +1,115 @@
+package com.momosoftworks.irradiated.common.radiation;
+
+import com.momosoftworks.irradiated.api.radiation.RadiationAPI;
+import com.momosoftworks.irradiated.core.init.ModEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+
+/**
+ * Handles radiation attacks from monsters, based on the old mod's system.
+ */
+@EventBusSubscriber
+public class RadiationMobAttacks {
+    
+    @SubscribeEvent
+    public static void onEntityDamage(LivingDamageEvent event) {
+        if (event.getEntity().level().isClientSide()) {
+            return;
+        }
+        
+        if (!RadiationConfig.ENABLE_MOB_RADIATION.get()) {
+            return;
+        }
+        
+        Entity source = event.getSource().getDirectEntity();
+        LivingEntity target = event.getEntity();
+        
+        if (!(target instanceof Player player)) {
+            return;
+        }
+        
+        // Check if the attack source is a slime
+        if (source instanceof Slime slime) {
+            handleSlimeRadiation(player, slime);
+        }
+        // Check if the attack source is a zombie
+        else if (source instanceof Zombie zombie) {
+            handleZombieRadiation(player, zombie);
+        }
+    }
+    
+    private static void handleSlimeRadiation(Player player, Slime slime) {
+        int currentRadiation = RadiationAPI.getRadiationLevel(player);
+        if (currentRadiation >= 7) {
+            return; // Already at max radiation
+        }
+        
+        // Calculate radiation resistance
+        double resistanceReduction = getRadiationResistance(player);
+        
+        // 30% chance to apply radiation (reduced by resistance)
+        if (player.getRandom().nextDouble() < (0.3 - resistanceReduction)) {
+            int radiationToAdd = (int) (2 * RadiationConfig.SLIME_RADIATION_MULTIPLIER.get());
+            RadiationAPI.addRadiation(player, radiationToAdd, 1200); // 1 minute duration
+        }
+    }
+    
+    private static void handleZombieRadiation(Player player, Zombie zombie) {
+        int currentRadiation = RadiationAPI.getRadiationLevel(player);
+        if (currentRadiation >= 7) {
+            return; // Already at max radiation
+        }
+        
+        // Calculate radiation resistance
+        double resistanceReduction = getRadiationResistance(player);
+        
+        // 15% chance to apply radiation (reduced by resistance)
+        if (player.getRandom().nextDouble() < (0.15 - resistanceReduction)) {
+            int radiationToAdd = (int) (1 * RadiationConfig.ZOMBIE_RADIATION_MULTIPLIER.get());
+            RadiationAPI.addRadiation(player, radiationToAdd, 1200); // 1 minute duration
+        }
+    }
+    
+    /**
+     * Calculate radiation resistance reduction
+     */
+    private static double getRadiationResistance(Player player) {
+        if (player.hasEffect(ModEffects.radResistanceHolder())) {
+            int amplifier = player.getEffect(ModEffects.radResistanceHolder()).getAmplifier();
+            return 0.25 * (amplifier + 1); // 25% reduction per level
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Calculate radiation levels to add based on radiation resistance
+     * This mimics the old mod's resistance calculation
+     */
+    private static int calculateRadiationLevels(Player player, int baseLevels) {
+        if (!player.hasEffect(ModEffects.radResistanceHolder())) {
+            return baseLevels;
+        }
+        
+        int resistanceLevel = player.getEffect(ModEffects.radResistanceHolder()).getAmplifier() + 1;
+        
+        // Calculate reduction based on resistance level
+        float reductionMultiplier = switch (resistanceLevel) {
+            case 1 -> 0.1f;  // 90% reduction
+            case 2 -> 0.05f; // 95% reduction 
+            case 3 -> 0.025f; // 97.5% reduction
+            case 4 -> 0.0125f; // 98.75% reduction
+            case 5 -> 0.0f;   // 100% reduction
+            default -> 1.0f;
+        };
+        
+        // Apply reduction and round to nearest integer
+        float reducedLevels = baseLevels * reductionMultiplier;
+        return Math.round(reducedLevels);
+    }
+}

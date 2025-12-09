@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "...",
+    " b ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:glowstone_dust"
+    },
+    ".": {
+      "item": "minecraft:gold_nugget"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:cateye",
+    "count": 4
+  }
+}

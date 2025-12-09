@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    " b ",
+    "///"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "/": {
+      "item": "minecraft:redstone"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:radaway",
+    "count": 4
+  }
+}

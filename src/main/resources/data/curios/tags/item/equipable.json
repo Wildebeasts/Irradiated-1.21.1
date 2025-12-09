@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "cold_sweat:thermometer",
+    "irradiated:geiger_counter"
+  ]
+}

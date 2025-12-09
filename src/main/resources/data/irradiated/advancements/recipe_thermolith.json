@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "has_item": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "cold_sweat:chameleon_molt"
+          }
+        ]
+      }
+    },
+    "has_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "cold_sweat:thermolith"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item",
+      "has_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "cold_sweat:thermolith"
+    ]
+  }
+}

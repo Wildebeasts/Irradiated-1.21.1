@@ -1,12 +1,32 @@
 
-Installation information
-=======
+# Irradiated Mod
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+A Minecraft mod for NeoForge 1.21.1 that adds radiation mechanics, consumable items, and survival elements inspired by the Fallout universe.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## Features
+
+- **Radiation System**: Environmental radiation tracking with visual indicators
+- **Consumable Items**: RadX, Radaway, Stimpack, Med-X, Psycho, Cateye, Jet, Buffout, and Nuka Cola variants
+- **Geiger Counter**: Equippable radiation detection device
+- **Visual Overlays**: HUD elements showing radiation levels and equipped items
+- **Curios Integration**: Charm slots for equipping radiation detection equipment
+
+## Installation
+
+1. Install **NeoForge 1.21.1**
+2. Install **Curios API** (required dependency)
+3. Place the Irradiated mod file in your `mods` folder
+
+## Curios Configuration
+
+This mod requires **2 charm slots** to function properly. The mod includes a default configuration file that should automatically set this up. If you're experiencing issues with only 1 charm slot available:
+
+1. Navigate to your Minecraft instance's `config` folder
+2. Edit `curios-common.toml`
+3. Set the slots configuration to: `slots = ["id=charm;size=2"]`
+4. Restart Minecraft
+
+## Development
 
 If at any point you are missing libraries in your IDE, or you've run into problems you can
 run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 

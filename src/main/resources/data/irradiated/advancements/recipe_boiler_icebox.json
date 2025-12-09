@@ -1,0 +1,21 @@
+{
+  "criteria": {
+    "requirement": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "player": {},
+        "items": [
+          {
+            "item": "cold_sweat:waterskin"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "cold_sweat:boiler",
+      "cold_sweat:icebox"
+    ]
+  }
+}

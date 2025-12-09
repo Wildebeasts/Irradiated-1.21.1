@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    " b ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:radx",
+    "count": 4
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    " b ",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:gunpowder"
+    },
+    "b": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "irradiated:jet",
+    "count": 4
+  }
+}

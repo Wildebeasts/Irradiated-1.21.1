@@ -1,0 +1,30 @@
+{
+  "replace": false,
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:gameplay/piglin_bartering"
+    }
+  ],
+  "additions": [
+    {
+      "item": "cold_sweat:soul_sprout",
+      "count":
+      {
+        "min": 2,
+        "max": 5
+      },
+      "weight": 30
+    },
+    {
+      "item": "cold_sweat:hoglin_hide",
+      "count":
+      {
+        "min": 1,
+        "max": 2
+      },
+      "weight": 40
+    }
+  ],
+  "type": "cold_sweat:piglin_barters"
+}

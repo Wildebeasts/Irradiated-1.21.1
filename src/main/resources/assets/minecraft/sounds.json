@@ -1,0 +1,40 @@
+{
+  "music.game": {
+    "category": "music",
+    "replace": false,
+    "sounds": [
+      {
+        "name": "cold_sweat:music/far_lands",
+        "stream": true
+      },
+      {
+        "name": "cold_sweat:music/modulo",
+        "stream": true
+      }
+    ]
+  },
+  "music.game.creative": {
+    "category": "music",
+    "replace": false,
+    "sounds": [
+      {
+        "name": "cold_sweat:music/far_lands",
+        "stream": true
+      },
+      {
+        "name": "cold_sweat:music/modulo",
+        "stream": true
+      }
+    ]
+  },
+  "music.menu": {
+    "category": "music",
+    "replace": false,
+    "sounds": [
+      {
+        "name": "cold_sweat:music/modulo",
+        "stream": true
+      }
+    ]
+  }
+}

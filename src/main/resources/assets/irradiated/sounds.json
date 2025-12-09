@@ -1,0 +1,108 @@
+{
+  "entity.player.damage.freeze":
+  {
+    "subtitle": "entity.player.damage.freeze",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/damage/freeze_0",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/damage/freeze_1",
+        "stream": true
+      }
+    ]
+  },
+  "entity.player.stimpack":
+  {
+    "subtitle": "entity.player.stimpack",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/stimpack",
+        "stream": true
+      }
+    ]
+  },
+  "entity.player.radaway":
+  {
+    "subtitle": "entity.player.radaway",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/radaway",
+        "stream": true
+      }
+    ]
+  },
+  "entity.player.jet":
+  {
+    "subtitle": "entity.player.jet",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/jet",
+        "stream": true
+      }
+    ]
+  },
+  "entity.player.pills":
+  {
+    "subtitle": "entity.player.pills",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/pills",
+        "stream": true
+      }
+    ]
+  },
+  "entity.player.geiger":
+  {
+    "subtitle": "entity.player.geiger",
+    "sounds":
+    [
+      {
+        "name": "irradiated:player/geiger/rad_a1",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_a2",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_a3",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_a4",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b5",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b6",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b7",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b8",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b9",
+        "stream": true
+      },
+      {
+        "name": "irradiated:player/geiger/rad_b10",
+        "stream": true
+      }
+    ]
+  }
+}
