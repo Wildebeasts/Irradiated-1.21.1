@@ -1,31 +1,27 @@
 {
+  "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_item": {
+    "has_iron": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
-            "item": "cold_sweat:chameleon_molt"
+            "items": ["minecraft:iron_ingot"]
           }
         ]
       }
     },
-    "has_recipe": {
+    "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "cold_sweat:thermolith"
+        "recipe": "irradiated:geiger_counter"
       }
     }
   },
   "requirements": [
-    [
-      "has_item",
-      "has_recipe"
-    ]
+    ["has_iron", "has_the_recipe"]
   ],
   "rewards": {
-    "recipes": [
-      "cold_sweat:thermolith"
-    ]
+    "recipes": ["irradiated:geiger_counter"]
   }
 }

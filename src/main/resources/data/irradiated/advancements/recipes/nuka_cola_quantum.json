@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_nuka_cola": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": ["irradiated:nuka_cola"]
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "irradiated:nuka_cola_quantum"
+      }
+    }
+  },
+  "requirements": [
+    ["has_nuka_cola", "has_the_recipe"]
+  ],
+  "rewards": {
+    "recipes": ["irradiated:nuka_cola_quantum"]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "irradiated_drinks",
+  "pattern": [
+    "EEE",
+    "NDN",
+    "LLL"
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:ender_pearl"
+    },
+    "N": {
+      "item": "irradiated:nuka_cola"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "L": {
+      "item": "minecraft:lapis_lazuli"
+    }
+  },
+  "result": {
+    "id": "irradiated:nuka_cola_quantum",
+    "count": 1
+  }
+}

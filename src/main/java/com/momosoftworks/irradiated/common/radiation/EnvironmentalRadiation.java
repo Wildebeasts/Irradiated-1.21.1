@@ -237,10 +237,10 @@ public class EnvironmentalRadiation {
                     
                     double distance = Math.sqrt(x * x + y * y + z * z);
                     
-                    // Check uranium ore
+                    // Check uranium ore (LEGACY - hardcoded values since this class is disabled)
                     if (block == Blocks.DEEPSLATE_COPPER_ORE) { // Using copper ore as uranium ore
-                        double chance = RadiationConfig.URANIUM_RADIATION_CHANCE.get();
-                        int maxLevel = RadiationConfig.URANIUM_MAX_LEVEL.get();
+                        double chance = 0.15; // Legacy hardcoded value
+                        int maxLevel = 20; // Legacy hardcoded value
                         
                         // Reduce chance based on distance
                         chance = chance * (1.0 - (distance / (range * 1.5)));

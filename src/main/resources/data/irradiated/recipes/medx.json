@@ -1,5 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "irradiated_chems",
   "pattern": [
     "///",
     " b ",
@@ -14,7 +16,7 @@
     }
   },
   "result": {
-    "item": "irradiated:medx",
+    "id": "irradiated:medx",
     "count": 4
   }
 }

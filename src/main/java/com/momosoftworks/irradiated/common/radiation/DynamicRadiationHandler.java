@@ -23,6 +23,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,6 +45,12 @@ public class DynamicRadiationHandler {
     private static final Map<String, RadiationSource> BIOME_SOURCES = new HashMap<>();
     private static final Map<String, RadiationSource> DIMENSION_SOURCES = new HashMap<>();
     private static final Map<Block, RadiationSource> BLOCK_SOURCES = new HashMap<>();
+    
+    // Cached per-block radiation values from config
+    private static final Map<String, BlockRadiationData> BLOCK_RADIATION_VALUES = new HashMap<>();
+    
+    // Cached shielding values from config
+    private static final Map<String, Double> SHIELDING_VALUES = new HashMap<>();
     
     // Flag to track if radiation sources have been initialized
     private static boolean sourcesInitialized = false;
@@ -68,8 +75,56 @@ public class DynamicRadiationHandler {
         // Dimension radiation sources  
         DIMENSION_SOURCES.put("minecraft:the_nether", new RadiationSource(0.001f, 100.0f, 0, 0.12f));
         
-        // Block radiation sources will be read from config at runtime
-        // No longer using hardcoded BLOCK_SOURCES map
+        // Parse per-block radiation values from config
+        parseBlockRadiationValues();
+        
+        // Parse shielding values from config
+        parseShieldingValues();
+    }
+    
+    private static void parseBlockRadiationValues() {
+        BLOCK_RADIATION_VALUES.clear();
+        List<? extends String> blockValues = RadiationConfig.RADIOACTIVE_BLOCKS.get();
+        for (String entry : blockValues) {
+            String[] parts = entry.split(":");
+            if (parts.length >= 4) {
+                String blockId = parts[0] + ":" + parts[1];
+                try {
+                    double chance = Double.parseDouble(parts[2]);
+                    int maxLevel = Integer.parseInt(parts[3]);
+                    BLOCK_RADIATION_VALUES.put(blockId, new BlockRadiationData(chance, maxLevel));
+                } catch (NumberFormatException e) {
+                    // Invalid format, skip this entry
+                }
+            }
+        }
+    }
+    
+    private static void parseShieldingValues() {
+        SHIELDING_VALUES.clear();
+        List<? extends String> shieldingEntries = RadiationConfig.SHIELDING_BLOCKS.get();
+        for (String entry : shieldingEntries) {
+            String[] parts = entry.split(":");
+            if (parts.length >= 3) {
+                String blockId = parts[0] + ":" + parts[1];
+                try {
+                    double shielding = Double.parseDouble(parts[2]);
+                    SHIELDING_VALUES.put(blockId, shielding);
+                } catch (NumberFormatException e) {
+                    // Invalid format, skip this entry
+                }
+            }
+        }
+    }
+    
+    private static class BlockRadiationData {
+        final double chancePerSecond;
+        final int maxLevel;
+        
+        BlockRadiationData(double chancePerSecond, int maxLevel) {
+            this.chancePerSecond = chancePerSecond;
+            this.maxLevel = maxLevel;
+        }
     }
     
     @SubscribeEvent
@@ -129,6 +184,9 @@ public class DynamicRadiationHandler {
         
         // Apply radiation resistance
         totalRadiationIntensity = applyRadiationResistance(player, totalRadiationIntensity);
+        
+        // Apply armor protection
+        totalRadiationIntensity = applyArmorProtection(player, totalRadiationIntensity);
         
         // Update dynamic radiation
         updateDynamicRadiation(player, data, totalRadiationIntensity, maxPossibleExposure);
@@ -213,9 +271,6 @@ public class DynamicRadiationHandler {
         // Get range from config
         int range = RadiationConfig.BLOCK_RADIATION_RANGE.get();
         
-        // Get radioactive blocks from config
-        java.util.List<? extends String> radioactiveBlocks = RadiationConfig.RADIOACTIVE_BLOCKS.get();
-        
         // Check blocks in range using config value
         for (int x = -range; x <= range; x++) {
             for (int y = -range; y <= range; y++) {
@@ -225,10 +280,10 @@ public class DynamicRadiationHandler {
                     ResourceLocation blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
                     String blockIdString = blockId.toString();
                     
-                    // Check if this block is in the radioactive blocks list
-                    if (radioactiveBlocks.contains(blockIdString)) {
-                        // Use configured max level for all radioactive blocks
-                        maxExposure = Math.max(maxExposure, RadiationConfig.URANIUM_MAX_LEVEL.get().floatValue());
+                    // Check if this block has radiation values configured
+                    BlockRadiationData radiationData = BLOCK_RADIATION_VALUES.get(blockIdString);
+                    if (radiationData != null) {
+                        maxExposure = Math.max(maxExposure, radiationData.maxLevel);
                     }
                 }
             }
@@ -256,16 +311,12 @@ public class DynamicRadiationHandler {
         BlockPos playerPos = player.blockPosition();
         Level world = player.level();
         float totalIntensity = 0.0f;
-        boolean foundRadiationBlocks = false;
         
         // Get range from config
         int range = RadiationConfig.BLOCK_RADIATION_RANGE.get();
         
-        // Get radioactive blocks from config
-        java.util.List<? extends String> radioactiveBlocks = RadiationConfig.RADIOACTIVE_BLOCKS.get();
-        
-        // Get base radiation intensity from config
-        float baseIntensity = RadiationConfig.URANIUM_RADIATION_CHANCE.get().floatValue() / 20.0f; // Convert per-second to per-tick
+        // Check if shielding is enabled
+        boolean shieldingEnabled = RadiationConfig.ENABLE_RADIATION_SHIELDING.get();
         
         // Check blocks in range using config value
         for (int x = -range; x <= range; x++) {
@@ -276,24 +327,105 @@ public class DynamicRadiationHandler {
                     ResourceLocation blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
                     String blockIdString = blockId.toString();
                     
-                    // Check if this block is in the radioactive blocks list
-                    if (radioactiveBlocks.contains(blockIdString)) {
+                    // Check if this block has radiation values configured
+                    BlockRadiationData radiationData = BLOCK_RADIATION_VALUES.get(blockIdString);
+                    if (radiationData != null) {
                         double distance = Math.sqrt(x * x + y * y + z * z);
+                        
+                        // Get per-block intensity
+                        float baseIntensity = (float) radiationData.chancePerSecond / 20.0f;
                         
                         // Intensity decreases with distance
                         float adjustedIntensity = baseIntensity * (1.0f - (float)(distance / (range * 1.2)));
-                        float addedIntensity = Math.max(0, adjustedIntensity);
-                        totalIntensity += addedIntensity;
+                        adjustedIntensity = Math.max(0, adjustedIntensity);
                         
-                        if (addedIntensity > 0) {
-                            foundRadiationBlocks = true;
+                        // Apply shielding reduction if enabled
+                        if (shieldingEnabled && adjustedIntensity > 0) {
+                            float shieldingReduction = calculateShieldingReduction(world, checkPos, playerPos);
+                            adjustedIntensity *= (1.0f - shieldingReduction);
                         }
+                        
+                        totalIntensity += adjustedIntensity;
                     }
                 }
             }
         }
         
         return totalIntensity;
+    }
+    
+    public static float calculateShieldingReduction(Level world, BlockPos sourcePos, BlockPos playerPos) {
+        double totalShielding = 0.0;
+        
+        // Use Bresenham-style line to trace blocks between source and player
+        double dx = playerPos.getX() - sourcePos.getX();
+        double dy = playerPos.getY() - sourcePos.getY();
+        double dz = playerPos.getZ() - sourcePos.getZ();
+        double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        
+        if (distance < 1.0) {
+            return 0.0f; // No blocks between source and player
+        }
+        
+        // Normalize direction
+        dx /= distance;
+        dy /= distance;
+        dz /= distance;
+        
+        // Step size for ray marching (smaller = more accurate but slower)
+        double stepSize = 0.5;
+        double defaultShielding = RadiationConfig.DEFAULT_BLOCK_SHIELDING.get();
+        
+        // Track visited block positions to avoid counting the same block multiple times
+        java.util.Set<BlockPos> visitedBlocks = new java.util.HashSet<>();
+        
+        // March along the ray from source to player
+        for (double t = stepSize; t < distance - 0.5; t += stepSize) {
+            int checkX = (int) Math.floor(sourcePos.getX() + dx * t + 0.5);
+            int checkY = (int) Math.floor(sourcePos.getY() + dy * t + 0.5);
+            int checkZ = (int) Math.floor(sourcePos.getZ() + dz * t + 0.5);
+            BlockPos checkPos = new BlockPos(checkX, checkY, checkZ);
+            
+            // Skip source and player positions
+            if (checkPos.equals(sourcePos) || checkPos.equals(playerPos)) {
+                continue;
+            }
+            
+            // Skip already visited blocks
+            if (visitedBlocks.contains(checkPos)) {
+                continue;
+            }
+            visitedBlocks.add(checkPos);
+            
+            BlockState blockState = world.getBlockState(checkPos);
+            
+            // Skip air and non-solid blocks
+            if (blockState.isAir() || !blockState.isSolidRender(world, checkPos)) {
+                continue;
+            }
+            
+            // Get shielding value for this block
+            ResourceLocation blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
+            String blockIdString = blockId.toString();
+            
+            double shieldingValue;
+            if (SHIELDING_VALUES.containsKey(blockIdString)) {
+                shieldingValue = SHIELDING_VALUES.get(blockIdString);
+            } else {
+                // Use default shielding for solid blocks not in the list
+                shieldingValue = defaultShielding;
+            }
+            
+            totalShielding += shieldingValue;
+            
+            // Cap at 100% shielding
+            if (totalShielding >= 100.0) {
+                return 1.0f;
+            }
+        }
+        
+        // Convert percentage to reduction factor (0.0 to 1.0)
+        return (float) Math.min(1.0, totalShielding / 100.0);
     }
     
     private static float applyRadiationResistance(Player player, float intensity) {
@@ -306,7 +438,32 @@ public class DynamicRadiationHandler {
         return intensity;
     }
     
+    private static float applyArmorProtection(Player player, float intensity) {
+        if (!RadiationConfig.ENABLE_ARMOR_PROTECTION.get()) {
+            return intensity;
+        }
+        
+        // Calculate total armor points from equipped armor
+        float totalArmor = 0.0f;
+        for (net.minecraft.world.item.ItemStack armorItem : player.getArmorSlots()) {
+            if (!armorItem.isEmpty() && armorItem.getItem() instanceof net.minecraft.world.item.ArmorItem armorItemType) {
+                totalArmor += armorItemType.getDefense();
+            }
+        }
+        
+        // Calculate protection percentage based on armor points
+        float protectionPercent = (float) (totalArmor * RadiationConfig.ARMOR_PROTECTION_PER_POINT.get());
+        protectionPercent = Math.min(95.0f, protectionPercent); // Cap at 95% protection
+        
+        // Apply protection
+        float reducedIntensity = intensity * (1.0f - (protectionPercent / 100.0f));
+        return reducedIntensity;
+    }
+    
     private static void updateDynamicRadiation(Player player, DynamicRadiationData data, float exposureIntensity, float maxPossibleExposure) {
+        // Check if player is in water for decontamination
+        boolean isInWater = player.isInWater() || player.isInWaterOrBubble() || player.isInWaterOrRain();
+        
         // If exposed to radiation sources, gradually increase
         if (exposureIntensity > 0) {
             float buildupRate = RadiationConfig.RADIATION_BUILDUP_RATE.get().floatValue();
@@ -321,6 +478,12 @@ public class DynamicRadiationHandler {
                 // Since there are 20 ticks per second, divide by 20 to get per-tick increase
                 float radiationPerSecond = exposureIntensity * buildupRate * 100.0f; // Scale intensity to meaningful range
                 float actualIncrease = radiationPerSecond / 20.0f; // Convert to per-tick (divide by 20 ticks per second)
+                
+                // Water reduces radiation buildup
+                if (isInWater) {
+                    actualIncrease *= 0.5f; // 50% less buildup in water
+                }
+                
                 data.currentExposure = Math.min(100.0f, data.currentExposure + actualIncrease);
             }
             data.timeSinceLastExposure = 0;
@@ -334,7 +497,6 @@ public class DynamicRadiationHandler {
             // Only start decaying after the configured delay
             if (data.timeSinceLastExposure >= decayDelayTicks) {
                 // Determine decay rate based on environment
-                boolean isInWater = player.isInWater() || player.isInWaterOrBubble() || player.isInWaterOrRain();
                 int decayIntervalTicks;
                 
                 if (isInWater) {
@@ -355,6 +517,13 @@ public class DynamicRadiationHandler {
                     }
                 }
             }
+        }
+        
+        // Water actively decontaminates (removes radiation slowly even when exposed)
+        if (isInWater && data.currentExposure > 0) {
+            // Remove 0.1 radiation per second (0.005 per tick) when in water
+            float waterDecontamination = 0.005f;
+            data.currentExposure = Math.max(0, data.currentExposure - waterDecontamination);
         }
         
         // Clamp exposure to reasonable limits

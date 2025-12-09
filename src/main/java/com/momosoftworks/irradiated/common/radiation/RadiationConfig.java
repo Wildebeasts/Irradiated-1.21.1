@@ -57,15 +57,27 @@ public class RadiationConfig {
     
     // Block radiation
     public static final ModConfigSpec.IntValue BLOCK_RADIATION_RANGE;
-    public static final ModConfigSpec.DoubleValue URANIUM_RADIATION_CHANCE;
-    public static final ModConfigSpec.IntValue URANIUM_MAX_LEVEL;
     public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> RADIOACTIVE_BLOCKS;
+    
+    // Radiation shielding
+    public static final ModConfigSpec.BooleanValue ENABLE_RADIATION_SHIELDING;
+    public static final ModConfigSpec.DoubleValue DEFAULT_BLOCK_SHIELDING;
+    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> SHIELDING_BLOCKS;
+    
+    // Armor protection
+    public static final ModConfigSpec.BooleanValue ENABLE_ARMOR_PROTECTION;
+    public static final ModConfigSpec.DoubleValue ARMOR_PROTECTION_PER_POINT;
     
     // Dynamic radiation system settings
     public static final ModConfigSpec.BooleanValue ENABLE_DYNAMIC_RADIATION;
     public static final ModConfigSpec.DoubleValue RADIATION_BUILDUP_RATE;
     public static final ModConfigSpec.DoubleValue RADIATION_DECAY_RATE;
     public static final ModConfigSpec.IntValue RADIATION_DECAY_DELAY;
+    
+    // Debug server settings
+    public static final ModConfigSpec.BooleanValue ENABLE_DEBUG_SERVER;
+    public static final ModConfigSpec.IntValue DEBUG_SERVER_PORT;
+    public static final ModConfigSpec.IntValue DEBUG_UPDATE_INTERVAL_MS;
     
     static {
         BUILDER.comment(
@@ -180,36 +192,112 @@ public class RadiationConfig {
         BLOCK_RADIATION_RANGE = BUILDER
                 .comment("Range in blocks to check for radiation sources")
                 .defineInRange("blockRadiationRange", 8, 1, 32);
-        
-        URANIUM_RADIATION_CHANCE = BUILDER
-                .comment("Chance per second for uranium ore radiation (0.0-1.0)")
-                .defineInRange("uraniumRadiationChance", 0.15, 0.0, 1.0);
-        
-        URANIUM_MAX_LEVEL = BUILDER
-                .comment("Maximum radiation level from uranium ore (1-100 scale)")
-                .defineInRange("uraniumMaxLevel", 20, 0, 100);
 
         RADIOACTIVE_BLOCKS = BUILDER
                 .comment(
-                    "List of blocks that emit radiation.",
-                    "Format: \"modid:block_name\" (one per line)",
-                    "Examples:",
-                    "  - minecraft:redstone_block",
-                    "  - minecraft:netherite_block",
-                    "  - minecraft:ancient_debris",
-                    "  - minecraft:uranium_ore (if added by other mods)",
+                    "List of blocks that emit radiation with their radiation values.",
+                    "Format: \"modid:block_name:chance_per_second:max_level\"",
+                    "  - chance_per_second: Radiation chance per second (0.0-1.0)",
+                    "  - max_level: Maximum radiation level this block can cause (1-100)",
                     "",
-                    "Each block in this list will emit radiation based on URANIUM_RADIATION_CHANCE and URANIUM_MAX_LEVEL.",
-                    "Add or remove blocks to customize which blocks are radioactive.",
-                    "Default includes: redstone_block, netherite_block, ancient_debris"
+                    "Examples:",
+                    "  - minecraft:redstone_block:0.05:10",
+                    "  - minecraft:netherite_block:0.15:25",
+                    "  - minecraft:ancient_debris:0.20:30",
+                    "",
+                    "Only blocks in this list will emit radiation.",
+                    "Add or remove entries to customize which blocks are radioactive."
                 )
                 .defineList("radioactiveBlocks",
                     java.util.Arrays.asList(
-                        "minecraft:redstone_block",
-                        "minecraft:netherite_block",
-                        "minecraft:ancient_debris"
+                        "minecraft:redstone_block:0.05:10",
+                        "minecraft:netherite_block:0.15:25",
+                        "minecraft:ancient_debris:0.20:30"
                     ),
-                    obj -> obj instanceof String && ((String) obj).contains(":"));
+                    obj -> obj instanceof String && ((String) obj).split(":").length >= 4);
+
+        BUILDER.pop();
+        
+        BUILDER.push("Radiation Shielding");
+        BUILDER.comment(
+            "Controls how blocks between radiation sources and players reduce radiation.",
+            "When enabled, solid blocks in the line of sight will reduce incoming radiation."
+        );
+
+        ENABLE_RADIATION_SHIELDING = BUILDER
+                .comment(
+                    "Enable radiation shielding from blocks.",
+                    "When enabled, blocks between a radiation source and the player will reduce radiation.",
+                    "Default: true"
+                )
+                .define("enableRadiationShielding", true);
+
+        DEFAULT_BLOCK_SHIELDING = BUILDER
+                .comment(
+                    "Default shielding value for solid blocks not in the shieldingBlocks list.",
+                    "This is a percentage of radiation blocked (0-100).",
+                    "Set to 0 to make unlisted blocks provide no shielding.",
+                    "Default: 5.0 (5% radiation blocked per block)"
+                )
+                .defineInRange("defaultBlockShielding", 5.0, 0.0, 100.0);
+
+        SHIELDING_BLOCKS = BUILDER
+                .comment(
+                    "List of blocks with custom shielding values.",
+                    "Format: \"modid:block_name:shielding_percent\"",
+                    "  - shielding_percent: Percentage of radiation blocked by this block (0-100)",
+                    "",
+                    "Examples:",
+                    "  - minecraft:obsidian:25 (blocks 25% of radiation)",
+                    "  - minecraft:iron_block:15",
+                    "  - minecraft:lead_block:50 (if added by other mods)",
+                    "  - minecraft:stone:5",
+                    "  - minecraft:deepslate:8",
+                    "",
+                    "Shielding is cumulative - multiple blocks stack their shielding values.",
+                    "Total shielding is capped at 100% (full radiation block)."
+                )
+                .defineList("shieldingBlocks",
+                    java.util.Arrays.asList(
+                        "minecraft:obsidian:25",
+                        "minecraft:crying_obsidian:25",
+                        "minecraft:iron_block:15",
+                        "minecraft:gold_block:12",
+                        "minecraft:copper_block:10",
+                        "minecraft:deepslate:8",
+                        "minecraft:stone:5",
+                        "minecraft:cobblestone:4",
+                        "minecraft:dirt:2",
+                        "minecraft:sand:1"
+                    ),
+                    obj -> obj instanceof String && ((String) obj).split(":").length >= 3);
+
+        BUILDER.pop();
+        
+        BUILDER.push("Armor Protection");
+        BUILDER.comment(
+            "Controls how armor protects against radiation.",
+            "Armor can reduce incoming radiation based on its defense points."
+        );
+
+        ENABLE_ARMOR_PROTECTION = BUILDER
+                .comment(
+                    "Enable armor-based radiation protection.",
+                    "When enabled, wearing armor will reduce radiation exposure.",
+                    "Default: true"
+                )
+                .define("enableArmorProtection", true);
+
+        ARMOR_PROTECTION_PER_POINT = BUILDER
+                .comment(
+                    "Percentage of radiation blocked per armor point.",
+                    "Full diamond armor (20 armor points) = 20 * 2.5 = 50% protection",
+                    "Full iron armor (15 armor points) = 15 * 2.5 = 37.5% protection",
+                    "Full leather armor (7 armor points) = 7 * 2.5 = 17.5% protection",
+                    "Range: 0.0 to 10.0",
+                    "Default: 2.5"
+                )
+                .defineInRange("armorProtectionPerPoint", 2.5, 0.0, 10.0);
 
         BUILDER.pop();
         
@@ -256,6 +344,41 @@ public class RadiationConfig {
                     "Default: 180 (3 minutes)"
                 )
                 .defineInRange("radiationDecayDelay", 180, 30, 1800);
+
+        BUILDER.pop();
+        
+        BUILDER.push("Debug Server");
+        BUILDER.comment(
+            "Settings for the web-based radiation debug dashboard.",
+            "WARNING: Only enable this for debugging purposes!",
+            "The server binds to localhost only and is not accessible from other machines."
+        );
+
+        ENABLE_DEBUG_SERVER = BUILDER
+                .comment(
+                    "Enable the radiation debug web server.",
+                    "When enabled, a web dashboard will be available at http://localhost:<port>/",
+                    "Default: false (disabled for security)"
+                )
+                .define("enableDebugServer", false);
+
+        DEBUG_SERVER_PORT = BUILDER
+                .comment(
+                    "Port for the debug web server.",
+                    "Access the dashboard at http://localhost:<port>/",
+                    "Range: 1024 to 65535",
+                    "Default: 8765"
+                )
+                .defineInRange("debugServerPort", 8765, 1024, 65535);
+
+        DEBUG_UPDATE_INTERVAL_MS = BUILDER
+                .comment(
+                    "How often to send updates to connected clients (in milliseconds).",
+                    "Lower values = more real-time but more CPU usage.",
+                    "Range: 100 to 5000 ms",
+                    "Default: 1000 (1 second)"
+                )
+                .defineInRange("debugUpdateIntervalMs", 1000, 100, 5000);
 
         BUILDER.pop();
         

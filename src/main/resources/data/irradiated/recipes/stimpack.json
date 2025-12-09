@@ -1,5 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "irradiated_chems",
   "pattern": [
     "...",
     " b ",
@@ -17,7 +19,7 @@
     }
   },
   "result": {
-    "item": "irradiated:stimpack",
+    "id": "irradiated:stimpack",
     "count": 4
   }
 }

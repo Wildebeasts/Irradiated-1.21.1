@@ -1,6 +1,7 @@
 package com.momosoftworks.irradiated;
 
 import com.momosoftworks.irradiated.common.command.RadiationCommand;
+import com.momosoftworks.irradiated.common.debug.RadiationDebugServer;
 import com.momosoftworks.irradiated.common.radiation.DynamicRadiationHandler;
 import com.momosoftworks.irradiated.common.radiation.RadiationConfig;
 import com.momosoftworks.irradiated.core.init.ModCreativeTab;
@@ -16,6 +17,8 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
 @Mod(Irradiated.MOD_ID)
 public class Irradiated {
@@ -30,7 +33,8 @@ public class Irradiated {
 		ModCreativeTab.REGISTER.register(modBus);
 
 		// Register common config (works on both client and server)
-		modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, RadiationConfig.SPEC);
+		// Config file will be at: config/irradiated/irradiated-common.toml
+		modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, RadiationConfig.SPEC, "irradiated/irradiated-common.toml");
 
 		// Register client config and extensions only on client side
 		if (FMLEnvironment.dist == Dist.CLIENT) {
@@ -46,10 +50,22 @@ public class Irradiated {
 		NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) ->
 			RadiationCommand.register(e.getDispatcher()));
 
+		// Register debug server events (server-side)
+		NeoForge.EVENT_BUS.addListener(this::onServerStarted);
+		NeoForge.EVENT_BUS.addListener(this::onServerStopping);
+
 		// Register client setup event listener only on client side
 		if (FMLEnvironment.dist == Dist.CLIENT) {
 			modBus.addListener(this::onClientSetup);
 		}
+	}
+
+	private void onServerStarted(ServerStartedEvent event) {
+		RadiationDebugServer.getInstance().start(event.getServer());
+	}
+
+	private void onServerStopping(ServerStoppingEvent event) {
+		RadiationDebugServer.getInstance().stop();
 	}
 
 	/**
@@ -74,7 +90,8 @@ public class Irradiated {
 		try {
 			Class<?> clientConfigClass = Class.forName("com.momosoftworks.irradiated.client.config.ClientConfig");
 			Object clientConfigSpec = clientConfigClass.getField("SPEC").get(null);
-			modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, (net.neoforged.neoforge.common.ModConfigSpec) clientConfigSpec);
+			// Config file will be at: config/irradiated/irradiated-client.toml
+			modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, (net.neoforged.neoforge.common.ModConfigSpec) clientConfigSpec, "irradiated/irradiated-client.toml");
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to register client config", e);
 		}
