@@ -93,6 +93,8 @@ public class RadiationConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_DEBUG_SERVER;
     public static final ModConfigSpec.IntValue DEBUG_SERVER_PORT;
     public static final ModConfigSpec.IntValue DEBUG_UPDATE_INTERVAL_MS;
+    public static final ModConfigSpec.BooleanValue DEBUG_SERVER_ALLOW_REMOTE;
+    public static final ModConfigSpec.IntValue DEBUG_WEBSOCKET_PORT;
     
     static {
         BUILDER.comment(
@@ -511,6 +513,26 @@ public class RadiationConfig {
                     "Default: 1000 (1 second)"
                 )
                 .defineInRange("debugUpdateIntervalMs", 1000, 100, 5000);
+
+        DEBUG_SERVER_ALLOW_REMOTE = BUILDER
+                .comment(
+                    "Allow remote connections to the debug server.",
+                    "When false: Only localhost can connect (safer)",
+                    "When true: Any machine on your network can connect",
+                    "WARNING: Only enable on trusted networks!",
+                    "Default: false (localhost only)"
+                )
+                .define("debugServerAllowRemote", false);
+
+        DEBUG_WEBSOCKET_PORT = BUILDER
+                .comment(
+                    "Port for WebSocket connections (real-time updates).",
+                    "Set to 0 to auto-assign (HTTP port + 1).",
+                    "Set to same as debugServerPort for hosting services with limited ports.",
+                    "Range: 0 or 1024 to 65535",
+                    "Default: 0 (auto-assign to HTTP port + 1)"
+                )
+                .defineInRange("debugWebSocketPort", 0, 0, 65535);
 
         BUILDER.pop();
         

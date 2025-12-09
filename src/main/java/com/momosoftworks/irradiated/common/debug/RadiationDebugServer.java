@@ -62,20 +62,29 @@ public class RadiationDebugServer {
         
         this.minecraftServer = server;
         int port = RadiationConfig.DEBUG_SERVER_PORT.get();
+        boolean allowRemote = RadiationConfig.DEBUG_SERVER_ALLOW_REMOTE.get();
+        String bindAddress = allowRemote ? "0.0.0.0" : "127.0.0.1";
         
         try {
+            // Set running to true BEFORE starting threads
+            running = true;
+            
             // Start HTTP server for dashboard
-            httpServer = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
             httpServer.createContext("/", new DashboardHandler());
             httpServer.createContext("/api/config", new ConfigApiHandler());
             httpServer.setExecutor(Executors.newFixedThreadPool(2));
             httpServer.start();
             
-            // Start WebSocket server on port + 1
-            int wsPort = port + 1;
+            // Start WebSocket server
+            int wsPort = RadiationConfig.DEBUG_WEBSOCKET_PORT.get();
+            if (wsPort == 0) {
+                // Auto-assign: HTTP port + 1
+                wsPort = port + 1;
+            }
             webSocketExecutor = Executors.newCachedThreadPool();
-            webSocketServerSocket = new ServerSocket(wsPort, 50, java.net.InetAddress.getByName("127.0.0.1"));
-            LOGGER.info("WebSocket ServerSocket created and bound to 127.0.0.1:{}", wsPort);
+            webSocketServerSocket = new ServerSocket(wsPort, 50, java.net.InetAddress.getByName(bindAddress));
+            LOGGER.info("WebSocket ServerSocket created and bound to {}:{}", bindAddress, wsPort);
             webSocketExecutor.submit(this::acceptWebSocketConnections);
             LOGGER.info("WebSocket acceptor thread submitted");
             
@@ -83,12 +92,17 @@ public class RadiationDebugServer {
             scheduler = Executors.newSingleThreadScheduledExecutor();
             int intervalMs = RadiationConfig.DEBUG_UPDATE_INTERVAL_MS.get();
             scheduler.scheduleAtFixedRate(this::broadcastRadiationData, 0, intervalMs, TimeUnit.MILLISECONDS);
-            
-            running = true;
             LOGGER.warn("===========================================");
             LOGGER.warn("RADIATION DEBUG SERVER STARTED");
-            LOGGER.warn("Dashboard: http://localhost:{}/", port);
-            LOGGER.warn("WebSocket: ws://localhost:{}/", wsPort);
+            if (allowRemote) {
+                LOGGER.warn("Dashboard: http://<server-ip>:{}/", port);
+                LOGGER.warn("WebSocket: ws://<server-ip>:{}/", wsPort);
+                LOGGER.warn("⚠️  REMOTE ACCESS ENABLED - Use with caution!");
+            } else {
+                LOGGER.warn("Dashboard: http://localhost:{}/", port);
+                LOGGER.warn("WebSocket: ws://localhost:{}/", wsPort);
+                LOGGER.warn("Remote access disabled (localhost only)");
+            }
             LOGGER.warn("WARNING: Only use for debugging!");
             LOGGER.warn("===========================================");
             
@@ -583,7 +597,11 @@ public class RadiationDebugServer {
     }
     
     private String getDashboardHtml() {
-        int wsPort = RadiationConfig.DEBUG_SERVER_PORT.get() + 1;
+        int wsPort = RadiationConfig.DEBUG_WEBSOCKET_PORT.get();
+        if (wsPort == 0) {
+            // Auto-assign: HTTP port + 1
+            wsPort = RadiationConfig.DEBUG_SERVER_PORT.get() + 1;
+        }
         return """
 <!DOCTYPE html>
 <html lang="en">
@@ -1585,7 +1603,9 @@ public class RadiationDebugServer {
                 keepaliveInterval = null;
             }
             
-            state.ws = new WebSocket('ws://localhost:' + WS_PORT);
+            // Use current host for WebSocket connection (works for both localhost and remote)
+            const wsHost = window.location.hostname;
+            state.ws = new WebSocket('ws://' + wsHost + ':' + WS_PORT);
             
             state.ws.onopen = () => {
                 state.connectionTime = Date.now();

@@ -58,9 +58,6 @@ public class RadiationTempHandler {
 				double currentCoreTemp = Temperature.get(player, Temperature.Trait.CORE);
 				double newCoreTemp = currentCoreTemp + finalHeat;
 				Temperature.set(player, Temperature.Trait.CORE, newCoreTemp);
-				
-				LOGGER.info("Added {} core heat to player (radiation level: {}, resistance: {}) - {} -> {}", 
-					finalHeat, radiationLevel, resistanceMultiplier, currentCoreTemp, newCoreTemp);
 			} catch (Exception e) {
 				LOGGER.error("Failed to add body heat from radiation: {}", e.getMessage());
 			}

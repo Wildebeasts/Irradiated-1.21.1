@@ -36,7 +36,6 @@ public class RadawayItem extends Item {
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-		LOGGER.info("DEBUG: RadawayItem.use() called");
 		ItemStack itemStack = player.getItemInHand(hand);
 		if (player.getCooldowns().isOnCooldown(this)) {
 			return InteractionResultHolder.pass(itemStack);
@@ -56,8 +55,6 @@ public class RadawayItem extends Item {
 
 	@Override
 	public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-		LOGGER.info("DEBUG: RadawayItem.finishUsingItem() called");
-		
 		Player player = entity instanceof Player ? (Player) entity : null;
 		if (player != null) {
 			player.awardStat(Stats.ITEM_USED.get(this));
@@ -70,73 +67,26 @@ public class RadawayItem extends Item {
 		level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), 
 				ModSounds.RADAWAY.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
 		
-		LOGGER.info("DEBUG: About to call direct radiation reduction, level.isClientSide=" + level.isClientSide);
-		
-		// Check radiation level before
-		int radiationBefore = RadiationAPI.getRadiationLevel(entity);
-		LOGGER.info("DEBUG: Radiation level before RadAway: " + radiationBefore);
-		
 		// Only apply radiation reduction on server side for proper synchronization
 		if (!level.isClientSide) {
 			try {
 				// Use RadiationAPI for proper integration with dynamic system
-				LOGGER.info("DEBUG: Using RadiationAPI.reduceRadiation() method");
-				
-				int currentLevel = RadiationAPI.getRadiationLevel(entity);
-				LOGGER.info("DEBUG: Current radiation level: " + currentLevel);
-				
 				// Reduce radiation by 25 levels using the API
 				RadiationAPI.reduceRadiation(entity, 25.0f);
-				
-				int newLevel = RadiationAPI.getRadiationLevel(entity);
-				LOGGER.info("DEBUG: New radiation level after reduction: " + newLevel);
-				
-				LOGGER.info("DEBUG: RadiationAPI radiation reduction completed successfully");
 			} catch (Exception e) {
-				LOGGER.info("DEBUG: Exception in RadiationAPI radiation reduction: " + e.getMessage());
-				e.printStackTrace();
+				LOGGER.error("Failed to reduce radiation with RadAway: {}", e.getMessage());
 			}
 			
 			// Apply body heat reduction using ColdSweat API (server side only)
 			try {
-				LOGGER.info("DEBUG: Trying body heat reduction (SERVER SIDE)");
-				
-				// Get current body temperature
-				double currentBodyTemp = Temperature.get(entity, Temperature.Trait.BODY);
-				LOGGER.info("DEBUG: Current body temperature: " + currentBodyTemp);
-				
 				// Reduce body temperature by 50 units (significant cooling effect)
 				// Using CORE temperature trait as it directly affects body temperature
 				double currentCoreTemp = Temperature.get(entity, Temperature.Trait.CORE);
 				double newCoreTemp = currentCoreTemp - 50.0;
-				LOGGER.info("DEBUG: Body heat - Current core: " + currentCoreTemp + ", New core: " + newCoreTemp);
-				
 				Temperature.set(entity, Temperature.Trait.CORE, newCoreTemp);
-				LOGGER.info("DEBUG: Body heat reduction completed successfully");
-				
-				// Check final body temperature
-				double finalBodyTemp = Temperature.get(entity, Temperature.Trait.BODY);
-				LOGGER.info("DEBUG: Final body temperature: " + finalBodyTemp);
-				
 			} catch (Exception e) {
-				LOGGER.info("DEBUG: Exception in body heat reduction: " + e.getMessage());
-				e.printStackTrace();
+				LOGGER.error("Failed to reduce body heat with RadAway: {}", e.getMessage());
 			}
-		} else {
-			LOGGER.info("DEBUG: Skipping radiation reduction on client side");
-		}
-		
-		// Check radiation level after (immediate)
-		int radiationAfter = RadiationAPI.getRadiationLevel(entity);
-		LOGGER.info("DEBUG: Radiation level after RadAway (immediate): " + radiationAfter);
-		
-		// Check radiation level after with delay (server side only)
-		if (!level.isClientSide) {
-			// Schedule a delayed check to see if the radiation level changed
-			level.getServer().tell(new net.minecraft.server.TickTask(5, () -> {
-				int radiationAfterDelay = RadiationAPI.getRadiationLevel(entity);
-				LOGGER.info("DEBUG: Radiation level after RadAway (5 ticks later): " + radiationAfterDelay);
-			}));
 		}
 		
 		return stack;

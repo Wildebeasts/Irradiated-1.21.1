@@ -1,4 +1,63 @@
-# Irradiated Mod - Recipe Setup
+# Irradiated Mod - Setup Guide
+
+## Debug Dashboard Remote Access
+
+By default, the debug dashboard only accepts connections from localhost (same machine as server). To access it remotely:
+
+### Enable Remote Access
+
+1. **Edit config:** `config/irradiated/irradiated-common.toml`
+2. **Find Debug Server section:**
+   ```toml
+   [Debug Server]
+       # Enable the debug web server
+       enableDebugServer = true
+       
+       # Port for the debug web server
+       debugServerPort = 8765
+       
+       # Allow remote connections (IMPORTANT!)
+       debugServerAllowRemote = true
+       
+       # WebSocket port (0 = auto-assign to HTTP port + 1)
+       # For hosting services: Set to SAME as debugServerPort
+       debugWebSocketPort = 0
+   ```
+3. **Restart server**
+
+### For Hosting Services (Limited Ports)
+
+If your hosting service only allows specific ports, set WebSocket to use the **same port** as HTTP:
+
+```toml
+[Debug Server]
+    debugServerPort = 8765
+    debugWebSocketPort = 8765  # ← Same as HTTP port!
+```
+
+This allows both HTTP and WebSocket to share one port.
+
+### Access from Remote Machine
+
+Once enabled, access the dashboard from any machine on your network:
+```
+http://<server-ip>:8765
+```
+
+**Example:**
+- Server IP: `192.168.1.100`
+- Port: `8765`
+- URL: `http://192.168.1.100:8765`
+
+### Security Notes
+- ⚠️ **Only enable on trusted networks!**
+- Dashboard provides full control (set/clear radiation)
+- No authentication by default
+- Consider disabling when not needed
+
+---
+
+# Recipe Setup
 
 ## Important Note
 The JSON recipes in `src/main/resources/data/irradiated/recipes/` are not being loaded by NeoForge due to a data loading issue.
