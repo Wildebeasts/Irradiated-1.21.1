@@ -830,8 +830,8 @@ public class RadiationDebugServer {
         .player-card {
             background: hsl(var(--card));
             border: 1px solid hsl(var(--border));
-            padding: 16px;
-            margin-bottom: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
             border-radius: var(--radius);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
@@ -854,11 +854,11 @@ public class RadiationDebugServer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .player-name {
-            font-size: 1.125rem;
+            font-size: 1rem;
             font-weight: 600;
             color: hsl(var(--foreground));
         }
@@ -894,9 +894,9 @@ public class RadiationDebugServer {
         /* Progress ring */
         .radiation-progress {
             position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 15px auto;
+            width: 80px;
+            height: 80px;
+            margin: 10px auto;
         }
         
         .radiation-ring {
@@ -906,12 +906,12 @@ public class RadiationDebugServer {
         .radiation-ring-bg {
             fill: none;
             stroke: #333;
-            stroke-width: 10;
+            stroke-width: 8;
         }
         
         .radiation-ring-progress {
             fill: none;
-            stroke-width: 10;
+            stroke-width: 8;
             stroke-linecap: round;
             transition: stroke-dashoffset 0.5s, stroke 0.5s;
         }
@@ -925,24 +925,33 @@ public class RadiationDebugServer {
         }
         
         .radiation-value {
-            font-size: 1.5em;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
         }
         
         .radiation-label {
-            font-size: 0.7em;
+            font-size: 0.625rem;
             color: #888;
         }
         
         .stat-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 6px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.875rem;
         }
         
-        .stat-label { color: #888; }
-        .stat-value { color: #fff; font-weight: bold; }
+        .stat-label { 
+            color: #888;
+            font-size: 0.8125rem;
+        }
+        .stat-value { 
+            color: #fff; 
+            font-weight: 600;
+            font-size: 0.8125rem;
+        }
         
         /* Controls */
         .controls {
@@ -1730,10 +1739,10 @@ public class RadiationDebugServer {
                 </div>
                 <div class="player-content" data-content="${player.name}">
                     <div class="radiation-progress">
-                        <svg class="radiation-ring" width="100" height="100">
-                            <circle class="radiation-ring-bg" cx="50" cy="50" r="40"></circle>
-                            <circle class="radiation-ring-progress" cx="50" cy="50" r="40" 
-                                    stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                        <svg class="radiation-ring" width="80" height="80">
+                            <circle class="radiation-ring-bg" cx="40" cy="40" r="32"></circle>
+                            <circle class="radiation-ring-progress" cx="40" cy="40" r="32" 
+                                    stroke-dasharray="201" stroke-dashoffset="201"></circle>
                         </svg>
                         <div class="radiation-center">
                             <div class="radiation-value">${player.radiationLevel}</div>
@@ -1805,7 +1814,7 @@ public class RadiationDebugServer {
             // Update progress ring
             const progress = card.querySelector('.radiation-ring-progress');
             const value = card.querySelector('.radiation-value');
-            const circumference = 251.2;
+            const circumference = 201; // 2 * PI * 32
             const offset = circumference - (player.radiationLevel / 100) * circumference;
             progress.style.strokeDashoffset = offset;
             progress.style.stroke = getRadiationColor(player.radiationLevel);

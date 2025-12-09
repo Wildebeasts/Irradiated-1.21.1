@@ -74,6 +74,21 @@ public class RadiationConfig {
     public static final ModConfigSpec.DoubleValue RADIATION_DECAY_RATE;
     public static final ModConfigSpec.IntValue RADIATION_DECAY_DELAY;
     
+    // Water decontamination settings
+    public static final ModConfigSpec.BooleanValue ENABLE_WATER_DECONTAMINATION;
+    public static final ModConfigSpec.DoubleValue WATER_BUILDUP_REDUCTION;
+    public static final ModConfigSpec.IntValue WATER_DECAY_DELAY_SECONDS;
+    public static final ModConfigSpec.DoubleValue WATER_ACTIVE_DECONTAMINATION_RATE;
+    
+    // Early game radiation removal items
+    public static final ModConfigSpec.BooleanValue ENABLE_MILK_RADIATION_REMOVAL;
+    public static final ModConfigSpec.DoubleValue MILK_RADIATION_REMOVAL_AMOUNT;
+    public static final ModConfigSpec.BooleanValue ENABLE_TOMATO_RADIATION_REMOVAL;
+    public static final ModConfigSpec.DoubleValue TOMATO_RADIATION_REMOVAL_AMOUNT;
+    public static final ModConfigSpec.DoubleValue TOMATO_SLICE_RADIATION_REMOVAL_AMOUNT;
+    public static final ModConfigSpec.DoubleValue TOMATO_SAUCE_RADIATION_REMOVAL_AMOUNT;
+    public static final ModConfigSpec.DoubleValue TOMATO_SANDWICH_RADIATION_REMOVAL_AMOUNT;
+    
     // Debug server settings
     public static final ModConfigSpec.BooleanValue ENABLE_DEBUG_SERVER;
     public static final ModConfigSpec.IntValue DEBUG_SERVER_PORT;
@@ -344,6 +359,123 @@ public class RadiationConfig {
                     "Default: 180 (3 minutes)"
                 )
                 .defineInRange("radiationDecayDelay", 180, 30, 1800);
+
+        BUILDER.pop();
+        
+        BUILDER.push("Water Decontamination");
+        BUILDER.comment(
+            "Settings for water-based radiation removal.",
+            "Water provides three types of protection:",
+            "1. Reduces radiation buildup while exposed",
+            "2. Faster decay when not exposed",
+            "3. Active decontamination (removes radiation slowly)"
+        );
+
+        ENABLE_WATER_DECONTAMINATION = BUILDER
+                .comment(
+                    "Enable water to reduce and remove radiation.",
+                    "When enabled, being in water/rain provides radiation protection.",
+                    "Default: true"
+                )
+                .define("enableWaterDecontamination", true);
+
+        WATER_BUILDUP_REDUCTION = BUILDER
+                .comment(
+                    "Percentage of radiation buildup reduction when in water.",
+                    "1.0 = no buildup reduction, 0.5 = 50% less buildup, 0.0 = no buildup at all.",
+                    "Range: 0.0 to 1.0",
+                    "Default: 0.5 (50% less radiation buildup in water)"
+                )
+                .defineInRange("waterBuildupReduction", 0.5, 0.0, 1.0);
+
+        WATER_DECAY_DELAY_SECONDS = BUILDER
+                .comment(
+                    "Delay in seconds before radiation decays when in water.",
+                    "Compare to normal decay delay (default 180 seconds).",
+                    "Lower = faster decay in water.",
+                    "Range: 0 to 60 seconds",
+                    "Default: 5 (much faster than normal 180 seconds)"
+                )
+                .defineInRange("waterDecayDelaySeconds", 5, 0, 60);
+
+        WATER_ACTIVE_DECONTAMINATION_RATE = BUILDER
+                .comment(
+                    "Amount of radiation actively removed per second when in water.",
+                    "This removal happens even while being exposed to radiation.",
+                    "Range: 0.0 to 10.0 radiation per second",
+                    "Default: 0.1 (removes 0.1 RAD per second)"
+                )
+                .defineInRange("waterActiveDecontaminationRate", 0.1, 0.0, 10.0);
+
+        BUILDER.pop();
+        
+        BUILDER.push("Early Game Radiation Removal");
+        BUILDER.comment(
+            "Settings for early-game radiation removal using vanilla/Farmer's Delight items.",
+            "These provide a cheaper alternative to RadAway before you can craft it."
+        );
+
+        ENABLE_MILK_RADIATION_REMOVAL = BUILDER
+                .comment(
+                    "Enable milk buckets to remove radiation when consumed.",
+                    "Provides an early-game option before you have RadAway.",
+                    "Default: true"
+                )
+                .define("enableMilkRadiationRemoval", true);
+
+        MILK_RADIATION_REMOVAL_AMOUNT = BUILDER
+                .comment(
+                    "Amount of radiation removed by drinking milk.",
+                    "For comparison, RadAway removes 25 radiation.",
+                    "Range: 0.0 to 100.0",
+                    "Default: 10.0 (early game option)"
+                )
+                .defineInRange("milkRadiationRemovalAmount", 10.0, 0.0, 100.0);
+
+        ENABLE_TOMATO_RADIATION_REMOVAL = BUILDER
+                .comment(
+                    "Enable tomatoes (from Farmer's Delight) to remove radiation when eaten.",
+                    "Provides a renewable early-game option.",
+                    "Requires Farmer's Delight mod to be installed.",
+                    "Default: true"
+                )
+                .define("enableTomatoRadiationRemoval", true);
+
+        TOMATO_RADIATION_REMOVAL_AMOUNT = BUILDER
+                .comment(
+                    "Amount of radiation removed by eating a whole tomato.",
+                    "For comparison, RadAway removes 25, milk removes 10.",
+                    "Range: 0.0 to 100.0",
+                    "Default: 5.0 (small but renewable)"
+                )
+                .defineInRange("tomatoRadiationRemovalAmount", 5.0, 0.0, 100.0);
+
+        TOMATO_SLICE_RADIATION_REMOVAL_AMOUNT = BUILDER
+                .comment(
+                    "Amount of radiation removed by eating tomato slices (Farmer's Delight).",
+                    "Should be less than a whole tomato since it's sliced.",
+                    "Range: 0.0 to 100.0",
+                    "Default: 2.0"
+                )
+                .defineInRange("tomatoSliceRadiationRemovalAmount", 2.0, 0.0, 100.0);
+
+        TOMATO_SAUCE_RADIATION_REMOVAL_AMOUNT = BUILDER
+                .comment(
+                    "Amount of radiation removed by eating tomato sauce (Farmer's Delight).",
+                    "Concentrated tomato product, more effective than slices.",
+                    "Range: 0.0 to 100.0",
+                    "Default: 7.0"
+                )
+                .defineInRange("tomatoSauceRadiationRemovalAmount", 7.0, 0.0, 100.0);
+
+        TOMATO_SANDWICH_RADIATION_REMOVAL_AMOUNT = BUILDER
+                .comment(
+                    "Amount of radiation removed by eating sandwiches containing tomatoes.",
+                    "From Some Assembly Required mod. Fills hunger + removes radiation.",
+                    "Range: 0.0 to 100.0",
+                    "Default: 6.0 (good food + radiation removal)"
+                )
+                .defineInRange("tomatoSandwichRadiationRemovalAmount", 6.0, 0.0, 100.0);
 
         BUILDER.pop();
         

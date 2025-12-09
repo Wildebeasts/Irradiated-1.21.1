@@ -462,7 +462,8 @@ public class DynamicRadiationHandler {
     
     private static void updateDynamicRadiation(Player player, DynamicRadiationData data, float exposureIntensity, float maxPossibleExposure) {
         // Check if player is in water for decontamination
-        boolean isInWater = player.isInWater() || player.isInWaterOrBubble() || player.isInWaterOrRain();
+        boolean isInWater = (player.isInWater() || player.isInWaterOrBubble() || player.isInWaterOrRain()) 
+                && RadiationConfig.ENABLE_WATER_DECONTAMINATION.get();
         
         // If exposed to radiation sources, gradually increase
         if (exposureIntensity > 0) {
@@ -481,7 +482,8 @@ public class DynamicRadiationHandler {
                 
                 // Water reduces radiation buildup
                 if (isInWater) {
-                    actualIncrease *= 0.5f; // 50% less buildup in water
+                    float reductionMultiplier = RadiationConfig.WATER_BUILDUP_REDUCTION.get().floatValue();
+                    actualIncrease *= reductionMultiplier;
                 }
                 
                 data.currentExposure = Math.min(100.0f, data.currentExposure + actualIncrease);
@@ -500,9 +502,9 @@ public class DynamicRadiationHandler {
                 int decayIntervalTicks;
                 
                 if (isInWater) {
-                    decayIntervalTicks = 5 * 20; // 5 seconds in water
+                    decayIntervalTicks = RadiationConfig.WATER_DECAY_DELAY_SECONDS.get() * 20;
                 } else {
-                    decayIntervalTicks = 15 * 20; // 15 seconds normally
+                    decayIntervalTicks = RadiationConfig.RADIATION_DECAY_DELAY.get() * 20;
                 }
                 
                 // Get decay rate from config
@@ -513,7 +515,13 @@ public class DynamicRadiationHandler {
                     if (data.currentExposure > 0) {
                         // Use config decay rate (scaled to be meaningful)
                         float decayAmount = decayRate * 100.0f; // Scale up since config is 0.001-0.1 range
+                        float previousExposure = data.currentExposure;
                         data.currentExposure = Math.max(0, data.currentExposure - decayAmount);
+                        
+                        // If exposure just dropped to zero, immediately clear the radiation effect
+                        if (previousExposure > 0 && data.currentExposure == 0) {
+                            player.removeEffect(ModEffects.radiationHolder());
+                        }
                     }
                 }
             }
@@ -521,13 +529,25 @@ public class DynamicRadiationHandler {
         
         // Water actively decontaminates (removes radiation slowly even when exposed)
         if (isInWater && data.currentExposure > 0) {
-            // Remove 0.1 radiation per second (0.005 per tick) when in water
-            float waterDecontamination = 0.005f;
+            // Active decontamination rate from config (per second, converted to per tick)
+            float waterDecontaminationPerSecond = RadiationConfig.WATER_ACTIVE_DECONTAMINATION_RATE.get().floatValue();
+            float waterDecontamination = waterDecontaminationPerSecond / 20.0f; // Convert to per-tick
+            float previousExposure = data.currentExposure;
             data.currentExposure = Math.max(0, data.currentExposure - waterDecontamination);
+            
+            // If exposure just dropped to zero, immediately clear the radiation effect
+            if (previousExposure > 0 && data.currentExposure == 0) {
+                player.removeEffect(ModEffects.radiationHolder());
+            }
         }
         
         // Clamp exposure to reasonable limits
         data.currentExposure = Math.max(0, Math.min(100.0f, data.currentExposure));
+        
+        // If exposure reached exactly 0, immediately clear the effect (don't wait for next second)
+        if (data.currentExposure == 0 && player.hasEffect(ModEffects.radiationHolder())) {
+            player.removeEffect(ModEffects.radiationHolder());
+        }
     }
     
     private static void applyRadiationEffect(Player player, DynamicRadiationData data) {
@@ -538,7 +558,11 @@ public class DynamicRadiationHandler {
                 // Override has expired, return to dynamic control
                 data.manuallyOverridden = false;
             } else {
-                // Skip dynamic radiation application while override is active
+                // Even when overridden, if exposure is 0, clear the effect
+                if (data.currentExposure == 0 && player.hasEffect(ModEffects.radiationHolder())) {
+                    player.removeEffect(ModEffects.radiationHolder());
+                }
+                // Skip normal dynamic radiation application while override is active
                 return;
             }
         }
@@ -548,20 +572,22 @@ public class DynamicRadiationHandler {
         int radiationLevel;
         if (data.currentExposure >= 99.5f) {
             radiationLevel = 100; // Ensure death threshold is reached
+        } else if (data.currentExposure < 0.5f) {
+            radiationLevel = 0; // Ensure very low exposure counts as 0
         } else {
             radiationLevel = Math.round(data.currentExposure);
         }
         
+        // Always remove the old effect first to ensure clean state
+        player.removeEffect(ModEffects.radiationHolder());
+        
         if (radiationLevel > 0) {
-            // Apply radiation effect directly without calling RadiationAPI to avoid circular updates
-            player.removeEffect(ModEffects.radiationHolder());
+            // Apply new radiation effect
             int clampedLevel = Math.max(1, Math.min(100, radiationLevel));
             player.addEffect(new MobEffectInstance(ModEffects.radiationHolder(), 
                     100, clampedLevel - 1, false, true, true));
-        } else {
-            // Clear radiation if exposure drops to zero
-            player.removeEffect(ModEffects.radiationHolder());
         }
+        // If radiationLevel is 0, effect stays removed (already removed above)
     }
     
     @SubscribeEvent

@@ -48,21 +48,21 @@ public class RadiationAPI {
      * @return Current radiation level (0 if no radiation, 1-100 for radiation severity)
      */
     public static int getRadiationLevel(LivingEntity entity) {
-        // For players, prioritize dynamic radiation system
+        // For players, ALWAYS use dynamic radiation system as source of truth
         if (entity instanceof Player player) {
             float exposure = DynamicRadiationHandler.getCurrentRadiationExposure(player);
-            if (exposure > 0) {
-                // Dynamic exposure is now on the same 1-100 scale
-                // Use ceiling for values very close to 100 to ensure death at 100 exposure
-                if (exposure >= 99.5f) {
-                    return 100; // Ensure death threshold is reached
-                } else {
-                    return Math.round(exposure);
-                }
+            // Dynamic exposure is now on the same 1-100 scale
+            // Use ceiling for values very close to 100 to ensure death at 100 exposure
+            if (exposure >= 99.5f) {
+                return 100; // Ensure death threshold is reached
+            } else if (exposure < 0.5f) {
+                return 0; // Ensure very low exposure is treated as 0
+            } else {
+                return Math.round(exposure);
             }
         }
         
-        // Fall back to MobEffectInstance for non-players or players without dynamic radiation
+        // Fall back to MobEffectInstance for non-players only
         MobEffectInstance effect = entity.getEffect(ModEffects.radiationHolder());
         if (effect != null) {
             return effect.getAmplifier() + 1; // +1 because amplifier is 0-based
@@ -114,6 +114,11 @@ public class RadiationAPI {
      * @param amount Amount of radiation to reduce
      */
     public static void reduceRadiation(LivingEntity entity, float amount) {
+        // Update dynamic radiation system first if this is a player
+        if (entity instanceof Player player) {
+            DynamicRadiationHandler.reduceRadiationExposure(player, amount);
+        }
+        
         MobEffectInstance currentEffect = entity.getEffect(ModEffects.radiationHolder());
         if (currentEffect != null) {
             // Get current level and duration
@@ -123,19 +128,15 @@ public class RadiationAPI {
             // Calculate new level
             int newLevel = Math.max(0, (int)(currentLevel - amount));
             
-            // Remove old effect
+            // Remove old effect first
             entity.removeEffect(ModEffects.radiationHolder());
             
-            // Add new effect if level > 0
+            // Add new effect if level > 0, otherwise it stays removed
             if (newLevel > 0) {
                 entity.addEffect(new MobEffectInstance(ModEffects.radiationHolder(), 
                         currentDuration, newLevel - 1, false, true, true));
             }
-        }
-        
-        // Also update dynamic radiation system if this is a player
-        if (entity instanceof Player player) {
-            DynamicRadiationHandler.reduceRadiationExposure(player, amount);
+            // If newLevel is 0, effect stays removed - this should sync to client immediately
         }
     }
     
