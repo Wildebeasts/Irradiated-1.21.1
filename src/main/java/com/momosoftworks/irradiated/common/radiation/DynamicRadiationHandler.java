@@ -469,9 +469,12 @@ public class DynamicRadiationHandler {
         if (exposureIntensity > 0) {
             float buildupRate = RadiationConfig.RADIATION_BUILDUP_RATE.get().floatValue();
             
-            // Allow buildup up to 100 regardless of individual source limits
-            // Individual source max exposure only affects buildup rate, not hard cap
-            if (data.currentExposure < 100.0f) {
+            // Limit buildup to the maxPossibleExposure from current radiation sources
+            // This ensures radiation from a biome with max 10 can't go above 10
+            // If maxPossibleExposure is 0, default to 100 (should not normally happen)
+            float effectiveMaxExposure = maxPossibleExposure > 0 ? maxPossibleExposure : 100.0f;
+            
+            if (data.currentExposure < effectiveMaxExposure) {
                 // Radiation builds up at 1-5 per SECOND (not per tick)
                 // exposureIntensity comes from config as per-second values, converted to per-tick
                 // buildupRate is a multiplier (default 1.0)
@@ -486,7 +489,8 @@ public class DynamicRadiationHandler {
                     actualIncrease *= reductionMultiplier;
                 }
                 
-                data.currentExposure = Math.min(100.0f, data.currentExposure + actualIncrease);
+                // Cap at the effective max exposure from current radiation sources
+                data.currentExposure = Math.min(effectiveMaxExposure, data.currentExposure + actualIncrease);
             }
             data.timeSinceLastExposure = 0;
         } else {
